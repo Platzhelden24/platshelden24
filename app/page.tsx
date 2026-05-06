@@ -125,8 +125,8 @@ const faqs = [
     a: "Der Preis wird für jeden Auftrag einzeln kalkuliert. Entscheidend sind Umfang, Menge, Etage, Zugänglichkeit, Transportweg und Entsorgungsart.",
   },
   {
-    q: "Gibt es einen Festpreis?",
-    a: "Nein. Wir arbeiten mit individuellen Angeboten, weil jeder Auftrag anders ist. So zahlen Sie nur für den tatsächlichen Aufwand Ihres Projekts.",
+    q: "Wie wird der Preis berechnet?",
+    a: "Wir erstellen für jeden Auftrag ein individuelles Angebot. Entscheidend sind Umfang, Menge, Etage, Zugänglichkeit, Transportweg und Entsorgungsart.",
   },
   {
     q: "Muss ich selbst etwas vorbereiten?",
@@ -227,20 +227,6 @@ const legalSections = [
   },
 ];
 
-function runSelfTests() {
-  const pageCopy = JSON.stringify({ navItems, trustItems, services, advantages, steps, faqs, legalSections, requestServices }).toLowerCase();
-  const results = [];
-  results.push({ name: "Navigation vorhanden", pass: navItems.length >= 6 });
-  results.push({ name: "Leistungen vorhanden", pass: services.length === 6 });
-  results.push({ name: "FAQ erweitert", pass: faqs.length >= 7 });
-  results.push({ name: "Mehrfachauswahl vorbereitet", pass: requestServices.length >= 8 });
-  results.push({ name: "Rechtstexte vorhanden", pass: legalSections.length === 5 });
-  results.push({ name: "Keine alte Anrechnung", pass: !pageCopy.includes("wertanrechnung") });
-  results.push({ name: "Keine alte Preislogik", pass: !pageCopy.includes("festpreis") });
-  return results;
-}
-
-const selfTests = runSelfTests();
 
 function IconCircle({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (

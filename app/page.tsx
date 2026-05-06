@@ -183,6 +183,7 @@ const legalSections = [
       "Ihre Daten werden gelöscht, sobald sie für den jeweiligen Zweck nicht mehr erforderlich sind und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.",
       "Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Außerdem haben Sie das Recht, sich bei einer Datenschutzaufsichtsbehörde zu beschweren.",
       "Eine Weitergabe an Dritte erfolgt nur, wenn dies zur Auftragsabwicklung erforderlich ist, eine gesetzliche Pflicht besteht oder Sie eingewilligt haben.",
+      "Hinweis: Diese Datenschutzerklärung muss final an den tatsächlichen Website-Betrieb angepasst werden, insbesondere an Hosting, Kontaktformular, E-Mail-Dienst, Analyse-Tools, Karten, Schriftarten und Cookie-Banner.",
     ],
   },
   {
@@ -198,6 +199,7 @@ const legalSections = [
       "7. Haftung: Für Schäden haftet Platzhelden24 nach den gesetzlichen Vorschriften. Für Schäden, die durch unvollständige oder falsche Angaben des Kunden entstehen, wird keine Haftung übernommen, soweit gesetzlich zulässig.",
       "8. Zahlung: Die Zahlung erfolgt gemäß Vereinbarung im Angebot. Fälligkeit, Zahlungsart und Zahlungsfrist werden im jeweiligen Auftrag festgelegt.",
       "9. Schlussbestimmungen: Es gilt deutsches Recht. Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.",
+      "Hinweis: Diese AGB sind ein Muster und sollten vor Veröffentlichung rechtlich geprüft werden.",
     ],
   },
   {
@@ -220,6 +222,7 @@ const legalSections = [
       "Technisch notwendige Cookies dienen zum Beispiel der sicheren Darstellung der Website, der Formularfunktion oder der Speicherung Ihrer Cookie-Auswahl. Diese Cookies können ohne Einwilligung gesetzt werden, soweit sie unbedingt erforderlich sind.",
       "Analyse-, Marketing- oder Tracking-Cookies werden nur eingesetzt, wenn Sie zuvor eingewilligt haben. Falls solche Dienste später eingebunden werden, wird die Cookie-Richtlinie entsprechend ergänzt.",
       "Sie können Ihre Cookie-Einstellungen jederzeit ändern oder eine erteilte Einwilligung widerrufen, sobald ein Cookie-Banner oder ein Einstellungsbereich auf der Website eingebunden ist.",
+      "Hinweis: Wenn externe Dienste wie Google Maps, Google Fonts, Analytics, Meta Pixel oder ähnliche Tools genutzt werden, muss diese Cookie-Richtlinie konkret erweitert werden.",
     ],
   },
 ];
@@ -239,7 +242,7 @@ function runSelfTests() {
 
 const selfTests = runSelfTests();
 
-function IconCircle({ children, dark = false }) {
+function IconCircle({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (
     <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl ${dark ? "bg-slate-950 text-white" : "bg-emerald-100 text-emerald-700"}`}>
       {children}
@@ -247,11 +250,11 @@ function IconCircle({ children, dark = false }) {
   );
 }
 
-function CheckIcon({ className = "" }) {
+function CheckIcon({ className = "" }: { className?: string }) {
   return <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-xs font-black text-white ${className}`}>✓</span>;
 }
 
-function XIcon({ className = "" }) {
+function XIcon({ className = "" }: { className?: string }) {
   return <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-black text-white ${className}`}>×</span>;
 }
 
@@ -259,7 +262,7 @@ function ArrowIcon() {
   return <span className="text-lg font-black">→</span>;
 }
 
-function Logo({ large = false }) {
+function Logo({ large = false }: { large?: boolean }) {
   const [imageOk, setImageOk] = useState(true);
 
   return (
@@ -285,7 +288,7 @@ function Logo({ large = false }) {
   );
 }
 
-function SectionTitle({ eyebrow, title, text, dark = false }) {
+function SectionTitle({ eyebrow, title, text, dark = false }: { eyebrow: string; title: string; text?: string; dark?: boolean }) {
   return (
     <div className="mx-auto max-w-3xl text-center">
       <p className={`mb-3 text-sm font-bold uppercase tracking-[0.25em] ${dark ? "text-emerald-300" : "text-emerald-700"}`}>{eyebrow}</p>
@@ -295,7 +298,7 @@ function SectionTitle({ eyebrow, title, text, dark = false }) {
   );
 }
 
-function FAQItem({ item, index }) {
+function FAQItem({ item, index }: { item: { q: string; a: string }; index: number }) {
   const [open, setOpen] = useState(index === 0);
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -312,7 +315,7 @@ function FAQItem({ item, index }) {
   );
 }
 
-function LegalBlock({ section, index }) {
+function LegalBlock({ section, index }: { section: { id: string; title: string; content: string[] }; index: number }) {
   return (
     <details id={section.id} open={index === 0} className="scroll-mt-28 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-slate-300">
       <summary className="cursor-pointer text-lg font-black text-white">{section.title}</summary>
@@ -339,7 +342,7 @@ function TestStatus() {
   );
 }
 
-function LegalModal({ section, onClose }) {
+function LegalModal({ section, onClose }: { section: { id: string; title: string; content: string[] } | undefined; onClose: () => void }) {
   if (!section) return null;
 
   return (
@@ -378,7 +381,7 @@ export default function Platzhelden24Landingpage() {
   const [activeLegalId, setActiveLegalId] = useState(null);
   const activeLegalSection = legalSections.find((section) => section.id === activeLegalId);
 
-  function toggleService(service) {
+  function toggleService(service: string) {
     setSelectedServices((current) => (
       current.includes(service)
         ? current.filter((item) => item !== service)

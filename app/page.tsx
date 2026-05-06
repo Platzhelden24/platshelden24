@@ -1,5 +1,5 @@
-"use client";
 // @ts-nocheck
+"use client";
 import React, { useState } from "react";
 
 const LOGO_SRC = "/assets/platzhelden24_ohne_unteren_text_transparent.png";

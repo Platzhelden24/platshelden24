@@ -328,20 +328,6 @@ function LegalBlock({ section, index }: { section: { id: string; title: string; 
   );
 }
 
-function TestStatus() {
-  const failed = selfTests.filter((test) => !test.pass);
-  if (failed.length === 0) return null;
-
-  return (
-    <div className="fixed bottom-4 left-4 z-[60] rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 shadow-xl">
-      <p className="font-black">Interner Test fehlgeschlagen</p>
-      <ul className="mt-2 list-disc pl-5">
-        {failed.map((test) => <li key={test.name}>{test.name}</li>)}
-      </ul>
-    </div>
-  );
-}
-
 function LegalModal({ section, onClose }: { section: { id: string; title: string; content: string[] } | undefined; onClose: () => void }) {
   if (!section) return null;
 
@@ -378,8 +364,63 @@ function LegalModal({ section, onClose }: { section: { id: string; title: string
 export default function Platzhelden24Landingpage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState(["Wohnungsentrümpelung"]);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [submitStatus, setSubmitStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeLegalId, setActiveLegalId] = useState(null);
   const activeLegalSection = legalSections.find((section) => section.id === activeLegalId);
+  function handleImageChange(event) {
+    const newFiles = Array.from(event.target.files || []);
+
+    setSelectedImages((currentFiles) => {
+      const existingKeys = new Set(currentFiles.map((file) => `${file.name}-${file.size}-${file.lastModified}`));
+      const uniqueNewFiles = newFiles.filter((file) => !existingKeys.has(`${file.name}-${file.size}-${file.lastModified}`));
+      return [...currentFiles, ...uniqueNewFiles];
+    });
+
+    event.target.value = "";
+  }
+
+  function removeSelectedImage(fileToRemove) {
+    setSelectedImages((currentFiles) => currentFiles.filter((file) => file !== fileToRemove));
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setSubmitStatus("");
+    setIsSubmitting(true);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    formData.delete("leistungen");
+    selectedServices.forEach((service) => formData.append("leistungen", service));
+
+    formData.delete("bilder");
+    selectedImages.forEach((file) => formData.append("bilder", file));
+
+    try {
+      const response = await fetch("/api/anfrage", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Die Anfrage konnte nicht gesendet werden.");
+      }
+
+      setSubmitStatus("success");
+      form.reset();
+      setSelectedServices([]);
+      setSelectedImages([]);
+    } catch (error) {
+      setSubmitStatus(error.message || "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   function toggleService(service: string) {
     setSelectedServices((current) => (
@@ -391,7 +432,6 @@ export default function Platzhelden24Landingpage() {
 
   return (
     <div id="top" className="min-h-screen bg-slate-50 text-slate-900">
-      <TestStatus />
 
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
@@ -691,19 +731,19 @@ export default function Platzhelden24Landingpage() {
               </div>
             </div>
 
-            <form className="rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm lg:p-8">
+            <form onSubmit={handleSubmit} className="rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm lg:p-8">
               <div className="grid gap-5 sm:grid-cols-2">
                 <label className="block">
                   <span className="mb-2 block text-sm font-bold text-slate-700">Name *</span>
-                  <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="Ihr Name" />
+                  <input name="name" required className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="Ihr Name" />
                 </label>
                 <label className="block">
                   <span className="mb-2 block text-sm font-bold text-slate-700">Telefon *</span>
-                  <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="Ihre Telefonnummer" />
+                  <input name="telefon" required className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="Ihre Telefonnummer" />
                 </label>
                 <label className="block sm:col-span-2">
                   <span className="mb-2 block text-sm font-bold text-slate-700">E-Mail</span>
-                  <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="Ihre E-Mail-Adresse" />
+                  <input name="email" type="email" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="Ihre E-Mail-Adresse" />
                 </label>
 
                 <fieldset className="sm:col-span-2">
@@ -714,6 +754,7 @@ export default function Platzhelden24Landingpage() {
                       return (
                         <label key={service} className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition ${checked ? "border-emerald-500 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300"}`}>
                           <input
+                            name="leistungen"
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleService(service)}
@@ -729,7 +770,7 @@ export default function Platzhelden24Landingpage() {
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-bold text-slate-700">Anzahl Zimmer</span>
-                  <select className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500">
+                  <select name="zimmer" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500">
                     <option>Bitte wählen</option>
                     <option>1 Zimmer</option>
                     <option>2 Zimmer</option>
@@ -744,7 +785,7 @@ export default function Platzhelden24Landingpage() {
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-bold text-slate-700">Etage</span>
-                  <select className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500">
+                  <select name="etage" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500">
                     <option>Bitte wählen</option>
                     <option>Erdgeschoss</option>
                     <option>1. Etage</option>
@@ -758,7 +799,7 @@ export default function Platzhelden24Landingpage() {
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-bold text-slate-700">Aufzug vorhanden?</span>
-                  <select className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500">
+                  <select name="aufzug" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500">
                     <option>Bitte wählen</option>
                     <option>Ja</option>
                     <option>Nein</option>
@@ -768,29 +809,77 @@ export default function Platzhelden24Landingpage() {
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-bold text-slate-700">Ort *</span>
-                  <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="z. B. Kleve" />
+                  <input name="ort" required className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="z. B. Kleve" />
                 </label>
 
-                <label className="block sm:col-span-2">
+                <div className="block sm:col-span-2">
                   <span className="mb-2 block text-sm font-bold text-slate-700">Bilder hinzufügen optional</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="w-full rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-bold file:text-white hover:border-emerald-400"
-                  />
-                  <p className="mt-2 text-sm text-slate-500">Sie können mehrere Bilder hochladen, damit wir den Aufwand besser einschätzen können.</p>
-                </label>
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 transition hover:border-emerald-400">
+                    <label
+                      htmlFor="bilder-upload"
+                      className="inline-flex cursor-pointer items-center justify-center rounded-full bg-emerald-600 px-5 py-3 text-sm font-black text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
+                    >
+                      Bilder auswählen
+                    </label>
+                    <input
+                      id="bilder-upload"
+                      type="file"
+                      name="bilder"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    <p className="mt-3 text-sm text-slate-500">
+                      Sie können mehrfach auf „Bilder auswählen“ klicken. Neue Bilder werden zur Liste hinzugefügt und ersetzen die alten nicht.
+                    </p>
+
+                    {selectedImages.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-sm font-bold text-slate-700">Ausgewählte Bilder:</p>
+                        <div className="grid gap-2">
+                          {selectedImages.map((file, index) => (
+                            <div key={`${file.name}-${file.size}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                              <span className="truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeSelectedImage(file)}
+                                className="shrink-0 rounded-full bg-red-50 px-3 py-1 font-bold text-red-700 hover:bg-red-100"
+                              >
+                                Entfernen
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm text-slate-500">Die Bilder werden zusammen mit der Anfrage an Platzhelden24 gesendet.</p>
+                </div>
 
                 <label className="block sm:col-span-2">
                   <span className="mb-2 block text-sm font-bold text-slate-700">Details zur Anfrage</span>
-                  <textarea className="min-h-32 w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="Was soll entrümpelt werden? Wie groß ist der Umfang? Gibt es schwere Gegenstände?" />
+                  <textarea name="details" className="min-h-32 w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 outline-none transition focus:border-emerald-500" placeholder="Was soll entrümpelt werden? Wie groß ist der Umfang? Gibt es schwere Gegenstände?" />
                 </label>
               </div>
-              <button type="button" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-7 py-4 text-base font-black text-white shadow-xl shadow-emerald-600/20 transition hover:bg-emerald-700">
-                Anfrage senden <ArrowIcon />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-7 py-4 text-base font-black text-white shadow-xl shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {isSubmitting ? "Anfrage wird gesendet..." : "Anfrage senden"} <ArrowIcon />
               </button>
-              <p className="mt-4 text-center text-sm text-slate-500">Unverbindlich. Individuell kalkuliert. Schnell beantwortet.</p>
+              {submitStatus === "success" && (
+                <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-center text-sm font-bold text-emerald-800">
+                  Ihre Anfrage wurde erfolgreich gesendet.
+                </p>
+              )}
+              {submitStatus && submitStatus !== "success" && (
+                <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-800">
+                  {submitStatus}
+                </p>
+              )}
+              <p className="mt-4 text-center text-sm text-slate-500">Unverbindlich. Individuell kalkuliert. Bilder werden direkt mitgesendet.</p>
             </form>
           </div>
         </section>
